@@ -6,37 +6,48 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertOpportunitySchema } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
+import { CreateOpportunityData } from "@/types/opportunity";
+import { insertOpportunitySchema } from "@/lib/schema";
+import { z } from "zod";
+
+const createOpportunitySchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  location: z.string().min(1, "Location is required"),
+  requiredSkills: z.array(z.string()).min(1, "At least one skill is required"),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().optional(),
+});
 
 export default function PostOpportunity() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const form = useForm({
-    resolver: zodResolver(insertOpportunitySchema),
+  const form = useForm<CreateOpportunityData>({
+    resolver: zodResolver(createOpportunitySchema),
     defaultValues: {
       title: "",
       description: "",
       location: "",
       requiredSkills: [],
-      startDate: new Date().toISOString(),
-      endDate: null,
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: "",
     },
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: any) => {
-      const res = await apiRequest("POST", "/api/opportunities", data);
+    mutationFn: async (data: CreateOpportunityData) => {
+      const res = await apiRequest('POST', '/opportunities', data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/opportunities"] });
+      queryClient.invalidateQueries({ queryKey: ['/opportunities'] });
       toast({
         title: "Success",
         description: "Opportunity posted successfully",
@@ -52,14 +63,14 @@ export default function PostOpportunity() {
     },
   });
 
-  const onSubmit = (data: any) => {
-    mutation.mutate(data);
-  };
-
-  if (user?.userType !== "ngo") {
+  if (!user || user.userType !== "ngo") {
     setLocation("/dashboard");
     return null;
   }
+
+  const onSubmit = (data: CreateOpportunityData) => {
+    mutation.mutate(data);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +95,7 @@ export default function PostOpportunity() {
                     <FormItem>
                       <FormLabel>Title</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} placeholder="Enter opportunity title" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -97,7 +108,7 @@ export default function PostOpportunity() {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea {...field} />
+                        <Textarea {...field} placeholder="Describe the opportunity and requirements" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -110,7 +121,24 @@ export default function PostOpportunity() {
                     <FormItem>
                       <FormLabel>Location</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} placeholder="Enter location" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="requiredSkills"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Required Skills</FormLabel>
+                      <FormControl>
+                        <Input
+                          value={field.value.join(', ')}
+                          onChange={(e) => field.onChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                          placeholder="Enter skills separated by commas"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -124,6 +152,24 @@ export default function PostOpportunity() {
                       <FormLabel>Start Date</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date (Optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="date" 
+                          {...field} 
+                          value={field.value || ''} 
+                          min={form.watch('startDate')}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

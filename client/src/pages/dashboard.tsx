@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
@@ -11,59 +11,43 @@ import {
   MapPin, 
   Clock, 
   Award, 
-  ChartBar, 
   Target, 
   Loader2,
   ArrowRight,
   Bell,
   Star
 } from "lucide-react";
-import type { Opportunity, Application } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/header";
+import { useApplications } from "@/hooks/use-applications";
+import { useEvents } from "@/hooks/use-events";
+import type { Application } from "@/services/applicationService";
+import type { Opportunity } from "@/services/opportunityService";
+import type { Event } from "@/services/eventService";
 
 export default function Dashboard() {
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { applications, isLoadingApplications } = useApplications();
+  const { registeredEvents, isLoadingRegisteredEvents } = useEvents();
 
   const { data: opportunities, isLoading: loadingOpportunities, error: opportunitiesError } = useQuery<Opportunity[]>({
     queryKey: ["/api/opportunities"],
+    queryFn: async () => {
+      try {
+        const data = await apiRequest("GET", "/api/opportunities");
+        console.log('Opportunities response:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching opportunities:', error);
+        throw error;
+      }
+    }
   });
 
-  const { data: applications, isLoading: loadingApplications, error: applicationsError } = useQuery<Application[]>({
-    queryKey: ["/api/applications"],
-    enabled: user?.userType === "individual",
-  });
-
-  const { data: registeredEvents, isLoading: loadingEvents } = useQuery({
-    queryKey: ["/api/events/registrations"],
-    enabled: user?.userType === "individual",
-  });
-
-  const applyMutation = useMutation({
-    mutationFn: async (opportunityId: number) => {
-      const res = await apiRequest("POST", `/api/opportunities/${opportunityId}/apply`, {});
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
-      toast({
-        title: "Success",
-        description: "Application submitted successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  if (loadingOpportunities || loadingApplications || loadingEvents) {
+  if (loadingOpportunities || isLoadingApplications || isLoadingRegisteredEvents) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -71,10 +55,28 @@ export default function Dashboard() {
     );
   }
 
-  if (opportunitiesError || applicationsError) {
+  if (opportunitiesError) {
+    console.error('Dashboard Errors:', { opportunitiesError });
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Error loading data. Please try again later.</p>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Error Loading Data</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">There was an error loading your dashboard data.</p>
+              <Button 
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20"
+              >
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -199,18 +201,16 @@ export default function Dashboard() {
                 <div className="grid gap-4">
                   {applications && applications.length > 0 ? (
                     applications.map((application) => {
-                      const opportunity = opportunities?.find(
-                        (o) => o.id === application.opportunityId
-                      );
+                      const opportunity = application.opportunityId;
                       return (
-                        <Card key={application.id} className="group hover:shadow-lg transition-all duration-300">
+                        <Card key={application._id} className="group hover:shadow-lg transition-all duration-300">
                           <CardHeader className={`
                             ${application.status === 'accepted' ? 'bg-green-500/10' :
                               application.status === 'rejected' ? 'bg-red-500/10' :
                               'bg-primary/5'} border-b border-border/5
                           `}>
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-lg">{opportunity?.title || "Opportunity"}</CardTitle>
+                              <CardTitle className="text-lg">{opportunity.title}</CardTitle>
                               <span className={`text-sm font-medium px-3 py-1 rounded-full ${
                                 application.status === 'accepted' ? 'bg-green-500/20 text-green-700' :
                                 application.status === 'rejected' ? 'bg-red-500/20 text-red-700' :
@@ -269,8 +269,8 @@ export default function Dashboard() {
                 </div>
                 <div className="grid gap-4">
                   {registeredEvents && registeredEvents.length > 0 ? (
-                    registeredEvents.map((event: any) => (
-                      <Card key={event.id} className="group hover:shadow-lg transition-all duration-300">
+                    registeredEvents.map((event) => (
+                      <Card key={event._id} className="group hover:shadow-lg transition-all duration-300">
                         <CardHeader className="bg-primary/5 border-b border-border/5">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-lg">{event.title}</CardTitle>
@@ -293,6 +293,10 @@ export default function Dashboard() {
                             <div className="flex items-center gap-2 text-muted-foreground col-span-2">
                               <MapPin className="h-4 w-4" />
                               <span>{event.location}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-muted-foreground col-span-2">
+                              <Users className="h-4 w-4" />
+                              <span>{event.registeredUsers?.length || 0} registered</span>
                             </div>
                           </div>
                         </CardContent>
@@ -337,10 +341,10 @@ export default function Dashboard() {
                   style={{ backgroundImage: 'url(/auth-back.jpg)' }}
                 />
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-                <div className="relative grid md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-                  {opportunities?.filter(o => o.organizationId === user.id).map((opportunity) => (
+                <div className="relative z-10 p-6 grid gap-4">
+                  {opportunities?.filter(o => o.organizationId === user?.id).map((opportunity) => (
                     <Card 
-                      key={opportunity.id} 
+                      key={opportunity._id} 
                       className="group hover:shadow-xl transition-all duration-300 bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20"
                     >
                       <CardHeader className="border-b border-white/10">
@@ -372,7 +376,7 @@ export default function Dashboard() {
                           </div>
                           <div className="flex items-center gap-2 text-white/70">
                             <Users className="h-4 w-4 text-primary" />
-                            <span>12 applications</span>
+                            <span>{opportunity.applicants.length} applications</span>
                           </div>
                         </div>
                         <Button 

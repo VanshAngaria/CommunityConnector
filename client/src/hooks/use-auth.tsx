@@ -4,40 +4,76 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  userType: 'individual' | 'ngo';
+  name: string;
+}
+
+interface LoginData {
+  username: string;
+  password: string;
+}
+
+interface RegisterData extends LoginData {
+  email: string;
+  userType: 'individual' | 'ngo';
+  name: string;
+  [key: string]: any;
+}
+
 type AuthContextType = {
-  user: SelectUser | null;
+  user: User | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  loginMutation: UseMutationResult<any, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  registerMutation: UseMutationResult<any, Error, RegisterData>;
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
-    queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    refetch: refetchProfile
+  } = useQuery<User | null, Error>({
+    queryKey: ["/api/users/profile"],
+    queryFn: async () => {
+      try {
+        return await apiRequest("GET", "/api/users/profile");
+      } catch (error) {
+        if (error instanceof Error && error.message === "Unauthorized") {
+          return null;
+        }
+        throw error;
+      }
+    },
+    retry: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      return await res.json();
+      const response = await apiRequest("POST", "/api/users/login", credentials);
+      localStorage.setItem('token', response.token);
+      return response.user;
     },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: async (user: User) => {
+      await refetchProfile();
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -49,12 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+    mutationFn: async (registerData: RegisterData) => {
+      const response = await apiRequest("POST", "/api/users/register", registerData);
+      localStorage.setItem('token', response.token);
+      return response.user;
     },
-    onSuccess: (user: SelectUser) => {
-      queryClient.setQueryData(["/api/user"], user);
+    onSuccess: async (user: User) => {
+      await refetchProfile();
+      toast({
+        title: "Welcome!",
+        description: "Your account has been created successfully.",
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -67,10 +108,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      localStorage.removeItem('token');
+      queryClient.clear();
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
+      queryClient.setQueryData(["/api/users/profile"], null);
+      toast({
+        title: "Goodbye!",
+        description: "You have been logged out successfully.",
+      });
     },
     onError: (error: Error) => {
       toast({
