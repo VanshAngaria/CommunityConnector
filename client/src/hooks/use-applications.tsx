@@ -6,9 +6,18 @@ import { queryClient } from '../lib/queryClient';
 export function useApplications() {
   const { toast } = useToast();
 
-  const { data: applications, isLoading: isLoadingApplications } = useQuery<Application[]>({
+  const { data: applications = [], isLoading: isLoadingApplications } = useQuery<Application[]>({
     queryKey: ['/api/applications'],
-    queryFn: applicationService.getApplications,
+    queryFn: async () => {
+      try {
+        const data = await applicationService.getApplications();
+        console.log('Fetched applications:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching applications:', error);
+        throw error;
+      }
+    },
   });
 
   const createApplicationMutation = useMutation({

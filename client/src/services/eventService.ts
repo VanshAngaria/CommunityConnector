@@ -12,6 +12,9 @@ export interface Event {
   status: 'upcoming' | 'ongoing' | 'completed';
   createdAt: string;
   updatedAt: string;
+  image?: string;
+  organizerAvatar?: string;
+  organizerName?: string;
 }
 
 export interface CreateEventData {

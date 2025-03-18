@@ -16,6 +16,12 @@ export default function AssistanceFinder() {
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("all");
 
+  // Function to open Google Maps directions
+  const openGoogleMaps = (address: string) => {
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+  };
+
   // Sample data - in a real app, this would come from an API
   const organizations = [
     {
@@ -191,7 +197,8 @@ export default function AssistanceFinder() {
                   </div>
                   <Button 
                     variant="outline" 
-                    className="w-full bg-background hover:bg-primary hover:text-background transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-background hover:bg-rose-500 hover:text-white transition-colors flex items-center justify-center gap-2"
+                    onClick={() => openGoogleMaps(org.address)}
                   >
                     Get Directions
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />

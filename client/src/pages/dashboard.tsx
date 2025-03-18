@@ -56,27 +56,9 @@ export default function Dashboard() {
   }
 
   if (opportunitiesError) {
-    console.error('Dashboard Errors:', { opportunitiesError });
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive">Error Loading Data</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-4">There was an error loading your dashboard data.</p>
-              <Button 
-                onClick={() => window.location.reload()}
-                variant="outline"
-                className="hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20"
-              >
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Error loading data. Please try again later.</p>
       </div>
     );
   }
@@ -202,6 +184,9 @@ export default function Dashboard() {
                   {applications && applications.length > 0 ? (
                     applications.map((application) => {
                       const opportunity = application.opportunityId;
+                      if (!opportunity || !opportunity.title || !opportunity.organizationId) {
+                        return null;
+                      }
                       return (
                         <Card key={application._id} className="group hover:shadow-lg transition-all duration-300">
                           <CardHeader className={`
@@ -341,8 +326,8 @@ export default function Dashboard() {
                   style={{ backgroundImage: 'url(/auth-back.jpg)' }}
                 />
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-                <div className="relative z-10 p-6 grid gap-4">
-                  {opportunities?.filter(o => o.organizationId === user?.id).map((opportunity) => (
+                <div className="relative grid md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                  {opportunities?.filter(o => o.organizationId._id.toString() === user.id).map((opportunity) => (
                     <Card 
                       key={opportunity._id} 
                       className="group hover:shadow-xl transition-all duration-300 bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/20"

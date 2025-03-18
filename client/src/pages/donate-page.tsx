@@ -22,20 +22,8 @@ export default function DonatePage() {
       return;
     }
 
-    // In a real app, this would redirect to a payment gateway
-    toast({
-      title: "Thank you for your donation!",
-      description: `Click here to complete your $${amount} donation.`,
-      action: (
-        <Button 
-          variant="link" 
-          onClick={() => window.open('https://example.com/donate', '_blank')}
-          className="text-primary hover:text-primary/90"
-        >
-          Complete Payment
-        </Button>
-      ),
-    });
+    // Redirect to Razorpay
+    window.open('https://razorpay.com', '_blank');
   };
 
   return (

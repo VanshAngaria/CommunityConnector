@@ -8,11 +8,24 @@ import { apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 interface User {
-  id: string;
+  _id: string;
   username: string;
   email: string;
   userType: 'individual' | 'ngo';
   name: string;
+  bio?: string;
+  location?: string;
+  skills?: string[];
+  organizationName?: string;
+  contactPhone?: string;
+  address?: string;
+  serviceTypes?: string[];
+  operatingHours?: string;
+  website?: string;
+  events: string[];
+  opportunities: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface LoginData {

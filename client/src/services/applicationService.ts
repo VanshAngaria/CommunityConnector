@@ -7,11 +7,16 @@ export interface Application {
     _id: string;
     title: string;
     description: string;
+    location: string;
+    requiredSkills: string[];
     organizationId: {
       _id: string;
       name: string;
       organizationName: string;
     };
+    startDate: string;
+    endDate?: string;
+    status: 'open' | 'closed';
   };
   status: 'pending' | 'accepted' | 'rejected';
   appliedAt: string;

@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Heart, Calendar, MessageSquare, MapPin, Droplet, Cross, Home, Phone } from "lucide-react";
+import { Users, Heart, Calendar, MessageSquare, MapPin, Droplet, Home } from "lucide-react";
 import { Header } from "@/components/header";
 import { useEffect } from "react";
 import Typed from "typed.js";
@@ -364,25 +364,22 @@ export default function HomePage() {
               </ul>
             </div>
             <div className="space-y-6">
-              <h4 className="text-xl font-semibold text-rose-500">Contact</h4>
+              <h4 className="text-xl font-semibold text-rose-500">Contact Us</h4>
               <ul className="space-y-3">
-                <li className="flex items-center space-x-3 text-gray-400">
-                  <MessageSquare className="h-5 w-5 text-rose-500" />
-                  <span>support@volunteerconnect.com</span>
-                </li>
-                <li className="flex items-center space-x-3 text-gray-400">
-                  <Phone className="h-5 w-5 text-rose-500" />
-                  <span>1-800-VOLUNTEER</span>
-                </li>
-                <li className="flex items-center space-x-3 text-gray-400">
+                <li className="flex items-center space-x-2 text-gray-400">
                   <MapPin className="h-5 w-5 text-rose-500" />
-                  <span>Global Community</span>
+                  <span>123 Community Street, City</span>
+                </li>
+                <li className="flex items-center space-x-2 text-gray-400">
+                  <MessageSquare className="h-5 w-5 text-rose-500" />
+                  <span>info@volunteerconnect.org</span>
+                </li>
+                <li className="flex items-center space-x-2 text-gray-400">
+                  <Users className="h-5 w-5 text-rose-500" />
+                  <span>Support: 24/7</span>
                 </li>
               </ul>
             </div>
-          </div>
-          <div className="mt-12 pt-8 border-t border-gray-900 text-center text-gray-500">
-            <p className="text-sm">&copy; 2024 Volunteer Connect. All rights reserved.</p>
           </div>
         </div>
       </footer>
