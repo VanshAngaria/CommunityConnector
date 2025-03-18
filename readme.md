@@ -1,6 +1,6 @@
 # Volunteer Connect
 
-![Volunteer Connect Logo](https://github.com/username/volunteer-connect/raw/main/public/images/logo.png)
+![Volunteer Connect Logo](/images/logo.png)
 
 ## 🌟 Overview
 
@@ -27,16 +27,16 @@ Volunteer Connect is a comprehensive platform dedicated to connecting volunteers
 ## 🖼️ Screenshots
 
 ### Home Page
-![Home Page](https://github.com/username/volunteer-connect/raw/main/screenshots/home.png)
+![Home Page](/Images/home.png)
 
 ### Upcoming Events
-![Events Page](https://github.com/username/volunteer-connect/raw/main/screenshots/events.png)
+![Events Page](/Images/events.png)
 
 ### Find Assistance
-![Find Help Page](https://github.com/username/volunteer-connect/raw/main/screenshots/find-help.png)
+![Find Help Page](/Images/find-help.png)
 
 ### Volunteer Opportunities
-![Opportunities Page](https://github.com/username/volunteer-connect/raw/main/screenshots/opportunities.png)
+![Opportunities Page](/Images/opportunities.png)
 
 ## 🚀 Getting Started
 
